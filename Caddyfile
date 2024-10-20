@@ -1,0 +1,20 @@
+{
+	admin off
+	auto_https off
+	skip_install_trust
+
+	servers :3000 {
+		listener_wrappers {
+			http_redirect
+			tls
+		}
+	}
+}
+
+:3000 {
+	tls internal {
+		on_demand
+	}
+
+	file_server browse
+}
