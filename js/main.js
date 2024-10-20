@@ -1,19 +1,30 @@
-import { TOTP, Secret } from "otpauth";
-import QR from "@paulmillr/qr";
+import * as OTPAuth from "otpauth";
+import encodeQR from "@paulmillr/qr";
+import decodeQR from "@paulmillr/qr/decode.js";
+import { QRCanvas, frontalCamera, frameLoop } from "@paulmillr/qr/dom.js";
 
-const $settings = /** @type {HTMLFormElement} */ (document.querySelector("#settings"));
-const $code = /** @type {HTMLInputElement} */ (document.querySelector("#code"));
-const $counter = /** @type {HTMLDivElement} */ (document.querySelector("#counter"));
-const $uri = /** @type {HTMLInputElement} */ (document.querySelector("#uri"));
-const $qr = /** @type {HTMLImageElement} */ (document.querySelector("#qr"));
+const $settings = document.querySelector("#settings");
+const $code = document.querySelector("#code");
+const $counter = document.querySelector("#counter");
+const $uri = document.querySelector("#uri");
+const $qr = document.querySelector("#qr");
+const $cameraModal = document.querySelector("#camera-modal");
+const $cameraPlayer = document.querySelector("#camera-player");
+const $cameraOverlay = document.querySelector("#camera-overlay");
+const $cameraList = document.querySelector("#camera-list");
+const $load = document.querySelector("#load");
 
 let totp = null;
+
+let camera = null;
+let cameraCanvas = null;
+let cameraLoopCancel = null;
 
 const generate = () => {
   if (!$settings.checkValidity()) return;
 
   const settings = new FormData($settings);
-  totp = new TOTP({
+  totp = new OTPAuth.TOTP({
     issuer: settings.get("issuer")?.toString(),
     label: settings.get("label")?.toString(),
     algorithm: settings.get("algorithm")?.toString(),
@@ -25,8 +36,20 @@ const generate = () => {
   $code.value = totp.generate();
   $uri.value = totp.toString();
 
-  const qr = QR($uri.value, "svg", { ecc: "low", scale: 1, border: 1 });
+  const qr = encodeQR($uri.value, "svg", { ecc: "low", scale: 1, border: 1 });
   $qr.src = URL.createObjectURL(new Blob([qr], { type: "image/svg+xml" }));
+};
+
+const load = async () => {
+  $settings["issuer"].value = totp.issuer;
+  $settings["label"].value = totp.label;
+  $settings["algorithm"].value = totp.algorithm;
+  $settings["digits"].value = totp.digits;
+  $settings["digits"].dispatchEvent(new Event("input", { bubbles: true }));
+  $settings["period"].value = totp.period;
+  $settings["period"].dispatchEvent(new Event("input", { bubbles: true }));
+  $settings["secret"].value = totp.secret.base32;
+  $settings.dispatchEvent(new Event("change", { bubbles: true }));
 };
 
 const progress = () => {
@@ -39,8 +62,18 @@ const progress = () => {
   $counter.setAttribute("aria-valuenow", remaining.toString());
 };
 
-$settings.addEventListener("input", () => generate());
-$settings.addEventListener("change", () => $settings.reportValidity());
+const notify = (() => {
+  const $toast = document.querySelector("#toast");
+  const $toastBody = $toast.querySelector(".toast-body");
+  let timer;
+  return (message) => {
+    clearTimeout(timer);
+    const bs = globalThis.bootstrap.Toast.getOrCreateInstance($toast);
+    $toastBody.textContent = message;
+    bs.show();
+    timer = setTimeout(() => bs.hide(), 5000);
+  };
+})();
 
 $settings.addEventListener("input", (event) => {
   if (event.target instanceof HTMLInputElement) {
@@ -53,10 +86,146 @@ $settings.addEventListener("input", (event) => {
   }
 });
 
+$settings.addEventListener("change", () => {
+  if ($settings.reportValidity()) {
+    generate();
+  }
+});
+
+$load.addEventListener("change", async (event) => {
+  event.stopPropagation();
+  if (!(event.target instanceof HTMLInputElement) || !event.target.files?.length) return;
+
+  const file = event.target.files[0];
+  const reader = new FileReader();
+  reader.addEventListener("load", async (event) => {
+    try {
+      if (!(event.target?.result instanceof ArrayBuffer)) return;
+
+      let source;
+      if (file.type === "image/svg+xml") {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(new TextDecoder().decode(event.target.result), file.type);
+
+        // Fill background
+        const rect = doc.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("width", "100%");
+        rect.setAttribute("height", "100%");
+        rect.setAttribute("fill", "white");
+        doc.documentElement.insertBefore(rect, doc.documentElement.firstChild);
+
+        // If no dimensions are set, use viewBox
+        const { width, height } = doc.documentElement.getBoundingClientRect();
+        if (!width || !height) {
+          const viewBox = doc.documentElement.getAttribute("viewBox")?.split(" ") ?? [];
+          if (viewBox.length !== 4) return;
+          doc.documentElement.setAttribute("width", viewBox[2]);
+          doc.documentElement.setAttribute("height", viewBox[3]);
+        }
+
+        const blob = new Blob([new XMLSerializer().serializeToString(doc)], { type: file.type });
+        source = new Image();
+        source.src = URL.createObjectURL(blob);
+        await new Promise((resolve, reject) => {
+          source.onload = resolve;
+          source.onerror = reject;
+        });
+      } else {
+        source = new Blob([event.target.result], { type: file.type });
+      }
+
+      const bitmap = await globalThis.createImageBitmap(source);
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0);
+
+      const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+      totp = OTPAuth.URI.parse(decodeQR(data));
+      load();
+    } catch (error) {
+      console.error(error);
+      notify(error.message ?? error);
+    }
+  });
+  reader.readAsArrayBuffer(file);
+
+  event.target.value = "";
+});
+
+$cameraModal.addEventListener("show.bs.modal", async () => {
+  try {
+    cameraCanvas = new QRCanvas({ overlay: $cameraOverlay });
+    camera = await frontalCamera($cameraPlayer);
+
+    const activeDeviceId = camera.stream.getVideoTracks()[0]?.getSettings().deviceId;
+
+    // Force reload to set video size correctly
+    if (activeDeviceId) camera.setDevice(activeDeviceId);
+
+    $cameraList.innerHTML = "";
+    for (const device of await camera.listDevices()) {
+      const $option = document.createElement("option");
+      $option.value = device.deviceId;
+      $option.textContent = device.label;
+      $option.selected = device.deviceId === activeDeviceId;
+      $cameraList.appendChild($option);
+    }
+
+    if (cameraLoopCancel) cameraLoopCancel();
+    cameraLoopCancel = frameLoop(() => {
+      const data = camera.readFrame(cameraCanvas);
+      if (!data) return;
+      try {
+        totp = OTPAuth.URI.parse(data);
+        load();
+      } catch (error) {
+        console.error(error);
+        notify(error.message ?? error);
+      } finally {
+        setTimeout(() => {
+          globalThis.bootstrap.Modal.getOrCreateInstance($cameraModal).hide();
+        }, 100);
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    notify(error.message ?? error);
+  }
+});
+
+$cameraModal.addEventListener("hide.bs.modal", () => {
+  try {
+    if (cameraLoopCancel) {
+      cameraLoopCancel();
+      cameraLoopCancel = null;
+    }
+    if (cameraCanvas) {
+      cameraCanvas.clear();
+      cameraCanvas = null;
+    }
+    if (camera) {
+      camera.stop();
+      camera = null;
+    }
+  } catch (error) {
+    console.error(error);
+    notify(error.message ?? error);
+  }
+});
+
+$cameraList.addEventListener("change", (event) => {
+  try {
+    camera?.setDevice(event.target.value);
+  } catch (error) {
+    console.error(error);
+    notify(error.message ?? error);
+  }
+});
+
 $code.addEventListener("focus", () => $code.select());
 $uri.addEventListener("focus", () => $uri.select());
 
-$settings["secret"].value = new Secret().base32;
+$settings["secret"].value = new OTPAuth.Secret().base32;
 
 generate();
 progress();

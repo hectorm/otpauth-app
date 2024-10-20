@@ -48,11 +48,15 @@
       {
         "imports": {
           "otpauth": "https://cdn.jsdelivr.net/npm/otpauth@9.3.4/dist/otpauth.esm.min.js",
-          "@paulmillr/qr": "https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/index.js"
+          "@paulmillr/qr": "https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/index.js",
+          "@paulmillr/qr/decode.js": "https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/decode.js",
+          "@paulmillr/qr/dom.js": "https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/dom.js"
         },
         "integrity": {
           "https://cdn.jsdelivr.net/npm/otpauth@9.3.4/dist/otpauth.esm.min.js": "sha384-Joj4PHzQgLqTFwqvpmphJdkLMaAPcilDva/FVBaVH8BilCYW8KlXJ3tNPIuPcuVA",
-          "https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/index.js": "sha384-FMD2qHcP7Hr6cnYnMvzteLz9zWkz0FSyFpd/5RWwvNetM0Bkz1uH5RdE9JEsc36B"
+          "https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/index.js": "sha384-FMD2qHcP7Hr6cnYnMvzteLz9zWkz0FSyFpd/5RWwvNetM0Bkz1uH5RdE9JEsc36B",
+          "https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/decode.js": "sha384-1eTxmu2CUa5H3HUhsY5XH/HqKBYpnRkeErToOpUQ6mfJCeTUhSLpKk4rWyXqkCCC",
+          "https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/dom.js": "sha384-DOVAh4vUntn6ZQSj4QxVNENIm3G0E11Ue5aDq76icBMIxxtxSJTL2PV+OpbFV+2P"
         }
       }
     </script>
@@ -208,6 +212,13 @@
                   />
                 </div>
               </div>
+              <div class="nav-item mb-3">
+                <div class="input-group input-group-sm">
+                  <button id="scan" type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#camera-modal">Scan QR</button>
+                  <label for="load" class="btn btn-primary btn-sm">Load QR</label>
+                </div>
+                <input id="load" class="d-none" type="file" accept="image/*" />
+              </div>
             </form>
           </div>
         </aside>
@@ -253,6 +264,31 @@
             </div>
           </div>
         </main>
+      </div>
+    </div>
+    <div id="camera-modal" class="modal fade" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-xxl-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Scan QR</h5>
+            <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-0 position-relative overflow-hidden bg-black">
+            <video id="camera-player" class="w-100 h-100"></video>
+            <canvas id="camera-overlay" class="position-absolute w-100 h-100 top-0 start-0"></canvas>
+          </div>
+          <div class="modal-footer">
+            <select id="camera-list" class="form-select"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+      <div id="toast" class="toast align-items-center">
+        <div class="d-flex">
+          <div class="toast-body"></div>
+          <button class="btn-close me-2 m-auto" type="button" data-bs-dismiss="toast"></button>
+        </div>
       </div>
     </div>
   </body>
