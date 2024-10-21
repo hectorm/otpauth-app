@@ -92,18 +92,11 @@
     </svg>
     <nav class="navbar bg-body-tertiary border-bottom">
       <div class="d-flex justify-content-start gap-2 container-fluid">
-        <button
-          class="navbar-toggler d-lg-none px-2 border-0"
-          type="button"
-          title="Menu"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#sidebar"
-        >
+        <button class="navbar-toggler d-lg-none px-2 border-0" type="button" title="Menu" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
           <svg class="icon"><use href="#fa-solid-sliders"></use></svg>
         </button>
         <div class="navbar-brand px-2">
-          <img src="./imgs/icon.svg" alt="OTPAuth" height="24" class="d-inline-block align-text-top" />
-          OTPAuth
+          <img src="./imgs/icon.svg" alt="OTPAuth" height="24" class="d-inline-block align-text-top" /> OTPAuth
         </div>
         <ul class="d-flex flex-row flex-grow-1 justify-content-end gap-2 navbar-nav px-2">
           <li class="nav-item">
@@ -121,11 +114,7 @@
     </nav>
     <div class="d-flex flex-grow-1 container-fluid overflow-hidden">
       <div class="d-flex flex-grow-1 row px-0 ps-lg-3 py-3 overflow-auto">
-        <aside
-          id="sidebar"
-          class="col-lg-4 col-xl-3 col-xxl-2 h-100 overflow-y-auto offcanvas-lg offcanvas-start bg-body-tertiary border rounded"
-          tabindex="-1"
-        >
+        <aside id="sidebar" class="col-lg-4 col-xl-3 col-xxl-2 h-100 overflow-y-auto offcanvas-lg offcanvas-start bg-body-tertiary border rounded" tabindex="-1">
           <div class="offcanvas-header">
             <h5 class="offcanvas-title">Settings</h5>
             <button class="btn-close" type="button" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"></button>
@@ -163,47 +152,21 @@
               <div class="nav-item mb-3">
                 <label for="digits" class="form-label">Digits</label>
                 <div class="input-group input-group-sm">
-                  <input
-                    id="digits"
-                    name="digits"
-                    class="form-control form-range h-auto"
-                    type="range"
-                    min="1"
-                    max="9"
-                    step="1"
-                    value="6"
-                  />
+                  <input id="digits" name="digits" class="form-control form-range h-auto" type="range" min="1" max="9" step="1" value="6" />
                   <output class="input-group-text">6</output>
                 </div>
               </div>
               <div class="nav-item mb-3">
                 <label for="period" class="form-label">Period</label>
                 <div class="input-group input-group-sm">
-                  <input
-                    id="period"
-                    name="period"
-                    class="form-control form-range h-auto"
-                    type="range"
-                    min="1"
-                    max="90"
-                    step="1"
-                    value="30"
-                  />
+                  <input id="period" name="period" class="form-control form-range h-auto" type="range" min="1" max="90" step="1" value="30" />
                   <output class="input-group-text">30</output>
                 </div>
               </div>
               <div class="nav-item mb-3">
                 <label for="secret" class="form-label">Secret</label>
                 <div class="input-group input-group-sm">
-                  <input
-                    id="secret"
-                    name="secret"
-                    class="form-control font-monospace"
-                    type="text"
-                    title="Base32 string"
-                    pattern="[2-7A-Z]+=*"
-                    required
-                  />
+                  <input id="secret" name="secret" class="form-control font-monospace" type="text" title="Base32 string" pattern="[2-7A-Z]+=*" required />
                 </div>
               </div>
               <div class="nav-item mb-3">
@@ -220,13 +183,8 @@
           <div class="row g-0 mb-3 p-4 bg-body-tertiary border rounded">
             <div class="col">
               <h1>OTPAuth code generator</h1>
-              <p>
-                <a href="https://github.com/hectorm/otpauth" rel="noopener noreferrer">OTPAuth</a>
-                is a One Time Password (HOTP/TOTP) library for Node.js, Deno, Bun and browsers.
-              </p>
-              <p>
-                This is a demo application to generate and display the OTP code and the QR code for the given settings.
-              </p>
+              <p><a href="https://github.com/hectorm/otpauth" rel="noopener noreferrer">OTPAuth</a> is a One Time Password (HOTP/TOTP) library for Node.js, Deno, Bun and browsers.</p>
+              <p>This is a demo application to generate and display the OTP code and the QR code for the given settings.</p>
             </div>
           </div>
           <div class="row g-0 mb-3">
@@ -234,15 +192,7 @@
               <label for="code" class="form-label">OTP code</label>
               <input id="code" class="form-control form-control-lg text-center font-monospace" type="text" readonly />
               <div class="progress mt-2">
-                <div
-                  id="counter"
-                  class="progress-bar"
-                  role="progressbar"
-                  aria-label="Counter"
-                  aria-valuenow="0"
-                  aria-valuemin="0"
-                  aria-valuemax="30"
-                ></div>
+                <div id="counter" class="progress-bar" role="progressbar" aria-label="Counter" aria-valuenow="0" aria-valuemin="0" aria-valuemax="30"></div>
               </div>
             </div>
           </div>
