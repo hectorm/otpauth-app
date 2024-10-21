@@ -36,7 +36,7 @@ const generate = () => {
   $code.value = totp.generate();
   $uri.value = totp.toString();
 
-  const qr = encodeQR($uri.value, "svg", { ecc: "low", scale: 1, border: 1 });
+  const qr = encodeQR($uri.value, "svg", { ecc: "medium", scale: 1, border: 1 });
   $qr.src = URL.createObjectURL(new Blob([qr], { type: "image/svg+xml" }));
 };
 
