@@ -9,8 +9,14 @@
         default-src 'none';
         img-src 'self' data: blob:;
         manifest-src 'self';
-        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/;
-        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/;
+        script-src 'self'
+          'sha384-XiiRgIf5zQ4bHRD8h77lp8w+PAEkizITuBcqxsfIJIHIN8EPq6rX/IXz7CzbJ8/v'
+          'sha384-GGD48dKK+yEC9giStEgl28vi/kpCBZksKua/C2XAB4B4aM9qjOse8Im1b0wlx7qP'
+          https://cdn.jsdelivr.net/npm/otpauth@9.3.4/
+          https://cdn.jsdelivr.net/npm/@paulmillr/qr@0.2.1/
+          https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/;
+        style-src 'self'
+          https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/;
       "
     />
 
