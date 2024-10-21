@@ -277,13 +277,15 @@
         </div>
       </div>
     </div>
-    <div class="toast-container position-fixed top-0 end-0 p-3">
-      <div id="toast" class="toast align-items-center">
-        <div class="d-flex">
-          <div class="toast-body"></div>
-          <button class="btn-close me-2 m-auto" type="button" data-bs-dismiss="toast"></button>
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3">
+      <template id="toast-template">
+        <div class="toast align-items-center border-0" style="--bs-bg-opacity: .75;">
+          <div class="d-flex">
+            <div class="toast-body"></div>
+            <button class="btn-close me-2 m-auto" type="button" data-bs-dismiss="toast"></button>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
   </body>
 </html>

@@ -40,7 +40,7 @@ const generate = () => {
   $qr.src = URL.createObjectURL(new Blob([qr], { type: "image/svg+xml" }));
 };
 
-const load = async () => {
+const load = () => {
   $settings["issuer"].value = totp.issuer;
   $settings["label"].value = totp.label;
   $settings["algorithm"].value = totp.algorithm;
@@ -63,15 +63,21 @@ const progress = () => {
 };
 
 const notify = (() => {
-  const $toast = document.querySelector("#toast");
-  const $toastBody = $toast.querySelector(".toast-body");
-  let timer;
-  return (message) => {
-    clearTimeout(timer);
-    const bs = globalThis.bootstrap.Toast.getOrCreateInstance($toast);
+  const $toastContainer = document.querySelector("#toast-container");
+  const $toastTemplate = document.querySelector("#toast-template");
+  return (message, variant = "primary", duration = 5000) => {
+    const clone = $toastTemplate.content.cloneNode(true);
+    const $toast = clone.querySelector(".toast");
+    $toast.classList.add(`text-bg-${variant}`);
+    const $toastBody = clone.querySelector(".toast-body");
     $toastBody.textContent = message;
+    $toastContainer.appendChild($toast);
+    const bs = globalThis.bootstrap.Toast.getOrCreateInstance($toast);
     bs.show();
-    timer = setTimeout(() => bs.hide(), 5000);
+    setTimeout(() => {
+      bs.hide();
+      $toast.addEventListener("hidden.bs.toast", () => $toast.remove());
+    }, duration);
   };
 })();
 
@@ -92,7 +98,7 @@ $settings.addEventListener("change", () => {
   }
 });
 
-$load.addEventListener("change", async (event) => {
+$load.addEventListener("change", (event) => {
   event.stopPropagation();
   if (!(event.target instanceof HTMLInputElement) || !event.target.files?.length) return;
 
@@ -142,9 +148,10 @@ $load.addEventListener("change", async (event) => {
       const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
       totp = OTPAuth.URI.parse(decodeQR(data));
       load();
+      notify("Loaded QR code from file", "success");
     } catch (error) {
       console.error(error);
-      notify(error.message ?? error);
+      notify(error.message ?? error, "danger");
     }
   });
   reader.readAsArrayBuffer(file);
@@ -178,9 +185,10 @@ $cameraModal.addEventListener("show.bs.modal", async () => {
       try {
         totp = OTPAuth.URI.parse(data);
         load();
+        notify("Loaded QR code from camera", "success");
       } catch (error) {
         console.error(error);
-        notify(error.message ?? error);
+        notify(error.message ?? error, "danger");
       } finally {
         setTimeout(() => {
           globalThis.bootstrap.Modal.getOrCreateInstance($cameraModal).hide();
@@ -189,7 +197,7 @@ $cameraModal.addEventListener("show.bs.modal", async () => {
     });
   } catch (error) {
     console.error(error);
-    notify(error.message ?? error);
+    notify(error.message ?? error, "danger");
   }
 });
 
@@ -209,7 +217,7 @@ $cameraModal.addEventListener("hide.bs.modal", () => {
     }
   } catch (error) {
     console.error(error);
-    notify(error.message ?? error);
+    notify(error.message ?? error, "danger");
   }
 });
 
@@ -218,7 +226,7 @@ $cameraList.addEventListener("change", (event) => {
     camera?.setDevice(event.target.value);
   } catch (error) {
     console.error(error);
-    notify(error.message ?? error);
+    notify(error.message ?? error, "danger");
   }
 });
 
