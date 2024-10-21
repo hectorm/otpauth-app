@@ -5,6 +5,10 @@
   fill: currentColor;
 }
 
+.toast {
+  --bs-bg-opacity: .90;
+}
+
 #qr {
   width: 20rem;
   max-width: 100%;
