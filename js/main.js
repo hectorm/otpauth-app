@@ -40,7 +40,10 @@ const generate = () => {
   $qr.src = URL.createObjectURL(new Blob([qr], { type: "image/svg+xml" }));
 };
 
-const load = () => {
+const load = (otp) => {
+  if (!(otp instanceof OTPAuth.TOTP)) throw new Error("Only TOTP is supported")
+
+  totp = otp;
   $settings["issuer"].value = totp.issuer;
   $settings["label"].value = totp.label;
   $settings["algorithm"].value = totp.algorithm;
@@ -146,8 +149,7 @@ $load.addEventListener("change", (event) => {
       ctx.drawImage(bitmap, 0, 0);
 
       const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
-      totp = OTPAuth.URI.parse(decodeQR(data));
-      load();
+      load(OTPAuth.URI.parse(decodeQR(data)));
       notify("Loaded QR code from file", "success");
     } catch (error) {
       console.error(error);
@@ -185,8 +187,7 @@ $cameraModal.addEventListener("show.bs.modal", async () => {
       const data = camera.readFrame(cameraCanvas);
       if (!data) return;
       try {
-        totp = OTPAuth.URI.parse(data);
-        load();
+        load(OTPAuth.URI.parse(data));
         notify("Loaded QR code from camera", "success");
       } catch (error) {
         console.error(error);
