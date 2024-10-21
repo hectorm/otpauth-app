@@ -178,8 +178,10 @@ $cameraModal.addEventListener("show.bs.modal", async () => {
       $cameraList.appendChild($option);
     }
 
+    let scanned = false;
     if (cameraLoopCancel) cameraLoopCancel();
     cameraLoopCancel = frameLoop(() => {
+      if (scanned) return;
       const data = camera.readFrame(cameraCanvas);
       if (!data) return;
       try {
@@ -190,6 +192,7 @@ $cameraModal.addEventListener("show.bs.modal", async () => {
         console.error(error);
         notify(error.message ?? error, "danger");
       } finally {
+        scanned = true;
         setTimeout(() => {
           globalThis.bootstrap.Modal.getOrCreateInstance($cameraModal).hide();
         }, 100);
