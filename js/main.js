@@ -16,10 +16,6 @@ const $load = document.querySelector("#load");
 
 let totp = null;
 
-let camera = null;
-let cameraCanvas = null;
-let cameraLoopCancel = null;
-
 const generate = () => {
   if (!$settings.checkValidity()) return;
 
@@ -161,10 +157,42 @@ $load.addEventListener("change", (event) => {
   event.target.value = "";
 });
 
+let camera = null;
+let cameraCanvas = null;
+let cameraLoopCancel = null;
+
+const cameraLoop = () => {
+  let scanned = false;
+  return frameLoop(() => {
+    if (scanned || $cameraPlayer.videoWidth === 0) return;
+    const data = camera.readFrame(cameraCanvas, true);
+    if (!data) return;
+    try {
+      load(OTPAuth.URI.parse(data));
+      notify("Loaded QR code from camera", "success");
+    } catch (error) {
+      console.error(error);
+      notify(error.message ?? error, "danger");
+    } finally {
+      scanned = true;
+      setTimeout(() => {
+        globalThis.bootstrap.Modal.getOrCreateInstance($cameraModal).hide();
+      }, 100);
+    }
+  });
+};
+
 $cameraModal.addEventListener("show.bs.modal", async () => {
   try {
-    cameraCanvas = new QRCanvas({ overlay: $cameraOverlay });
-    camera = await frontalCamera($cameraPlayer);
+    camera ??= await frontalCamera($cameraPlayer);
+    cameraCanvas ??= new QRCanvas({
+      overlay: $cameraOverlay,
+    }, {
+      overlayMainColor: "rgba(0, 255, 0, 0.5)",
+      overlayFinderColor: "rgba(0, 0, 255, 0.5)",
+      overlaySideColor: "rgba(0, 0, 0, 0)",
+      cropToSquare: false,
+    });
 
     const activeDeviceId = camera.stream.getVideoTracks()[0]?.getSettings().deviceId;
 
@@ -179,26 +207,6 @@ $cameraModal.addEventListener("show.bs.modal", async () => {
       $option.selected = device.deviceId === activeDeviceId;
       $cameraList.appendChild($option);
     }
-
-    let scanned = false;
-    if (cameraLoopCancel) cameraLoopCancel();
-    cameraLoopCancel = frameLoop(() => {
-      if (scanned) return;
-      const data = camera.readFrame(cameraCanvas);
-      if (!data) return;
-      try {
-        load(OTPAuth.URI.parse(data));
-        notify("Loaded QR code from camera", "success");
-      } catch (error) {
-        console.error(error);
-        notify(error.message ?? error, "danger");
-      } finally {
-        scanned = true;
-        setTimeout(() => {
-          globalThis.bootstrap.Modal.getOrCreateInstance($cameraModal).hide();
-        }, 100);
-      }
-    });
   } catch (error) {
     console.error(error);
     notify(error.message ?? error, "danger");
@@ -207,22 +215,18 @@ $cameraModal.addEventListener("show.bs.modal", async () => {
 
 $cameraModal.addEventListener("hide.bs.modal", () => {
   try {
-    if (cameraLoopCancel) {
-      cameraLoopCancel();
-      cameraLoopCancel = null;
-    }
-    if (cameraCanvas) {
-      cameraCanvas.clear();
-      cameraCanvas = null;
-    }
-    if (camera) {
-      camera.stop();
-      camera = null;
-    }
+    if (camera) camera.stop();
+    if (cameraCanvas) cameraCanvas.clear();
+    if (cameraLoopCancel) cameraLoopCancel();
   } catch (error) {
     console.error(error);
     notify(error.message ?? error, "danger");
   }
+});
+
+$cameraPlayer.addEventListener("play", () => {
+  if (cameraLoopCancel) cameraLoopCancel();
+  cameraLoopCancel = cameraLoop();
 });
 
 $cameraList.addEventListener("change", (event) => {
