@@ -37,7 +37,9 @@ const generate = () => {
 };
 
 const load = (otp) => {
-  if (!(otp instanceof OTPAuth.TOTP)) throw new Error("Only TOTP is supported")
+  if (!(otp instanceof OTPAuth.TOTP)) {
+    throw new Error("Only TOTP is supported");
+  }
 
   totp = otp;
   $settings["issuer"].value = totp.issuer;
@@ -48,6 +50,7 @@ const load = (otp) => {
   $settings["period"].value = totp.period;
   $settings["period"].dispatchEvent(new Event("input", { bubbles: true }));
   $settings["secret"].value = totp.secret.base32;
+
   $settings.dispatchEvent(new Event("change", { bubbles: true }));
 };
 
@@ -64,15 +67,21 @@ const progress = () => {
 const notify = (() => {
   const $toastContainer = document.querySelector("#toast-container");
   const $toastTemplate = document.querySelector("#toast-template");
+
   return (message, variant = "primary", duration = 5000) => {
     const clone = $toastTemplate.content.cloneNode(true);
+
     const $toast = clone.querySelector(".toast");
     $toast.classList.add(`text-bg-${variant}`);
+
     const $toastBody = clone.querySelector(".toast-body");
     $toastBody.textContent = message;
+
     $toastContainer.appendChild($toast);
+
     const bs = globalThis.bootstrap.Toast.getOrCreateInstance($toast);
     bs.show();
+
     setTimeout(() => {
       bs.hide();
       $toast.addEventListener("hidden.bs.toast", () => $toast.remove());
@@ -99,10 +108,12 @@ $settings.addEventListener("change", () => {
 
 $load.addEventListener("change", (event) => {
   event.stopPropagation();
-  if (!(event.target instanceof HTMLInputElement) || !event.target.files?.length) return;
+
+  if (!event.target.files?.length) return;
 
   const file = event.target.files[0];
   const reader = new FileReader();
+
   reader.addEventListener("load", async (event) => {
     try {
       if (!(event.target?.result instanceof ArrayBuffer)) return;
@@ -152,6 +163,7 @@ $load.addEventListener("change", (event) => {
       notify(error.message ?? error, "danger");
     }
   });
+
   reader.readAsArrayBuffer(file);
 
   event.target.value = "";
@@ -165,8 +177,10 @@ const cameraLoop = () => {
   let scanned = false;
   return frameLoop(() => {
     if (scanned || $cameraPlayer.videoWidth === 0) return;
+
     const data = camera.readFrame(cameraCanvas, true);
     if (!data) return;
+
     try {
       load(OTPAuth.URI.parse(data));
       notify("Loaded QR code from camera", "success");
