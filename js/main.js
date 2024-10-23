@@ -41,15 +41,22 @@ const load = (otp) => {
     throw new Error("Only TOTP is supported");
   }
 
-  totp = otp;
-  $settings["issuer"].value = totp.issuer;
-  $settings["label"].value = totp.label;
-  $settings["algorithm"].value = totp.algorithm;
-  $settings["digits"].value = totp.digits;
+  if (otp.digits < $settings["digits"].min || otp.digits > $settings["digits"].max) {
+    throw new Error("Digits out of range");
+  }
+
+  if (otp.period < $settings["period"].min || otp.period > $settings["period"].max) {
+    throw new Error("Period out of range");
+  }
+
+  $settings["issuer"].value = otp.issuer;
+  $settings["label"].value = otp.label;
+  $settings["algorithm"].value = otp.algorithm;
+  $settings["digits"].value = otp.digits;
   $settings["digits"].dispatchEvent(new Event("input", { bubbles: true }));
-  $settings["period"].value = totp.period;
+  $settings["period"].value = otp.period;
   $settings["period"].dispatchEvent(new Event("input", { bubbles: true }));
-  $settings["secret"].value = totp.secret.base32;
+  $settings["secret"].value = otp.secret.base32;
 
   $settings.dispatchEvent(new Event("change", { bubbles: true }));
 };
