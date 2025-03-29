@@ -1,7 +1,7 @@
 import * as OTPAuth from "otpauth";
-import encodeQR from "@paulmillr/qr";
-import decodeQR from "@paulmillr/qr/decode.js";
-import { QRCanvas, frontalCamera, frameLoop } from "@paulmillr/qr/dom.js";
+import encodeQR from "qr";
+import decodeQR from "qr/decode.js";
+import { QRCanvas, frontalCamera, frameLoop } from "qr/dom.js";
 
 const $settings = document.querySelector("#settings");
 const $code = document.querySelector("#code");
@@ -66,9 +66,11 @@ const progress = () => {
 
   $code.value = totp.generate();
 
-  const remaining = totp.period - (Math.floor(Date.now() / 1000) % totp.period);
-  $counter.style.width = `${(remaining / totp.period) * 100}%`;
-  $counter.setAttribute("aria-valuenow", remaining.toString());
+  const vnow = totp.remaining();
+  const vmax = totp.period * 1000;
+  $counter.style.width = `${(vnow / vmax) * 100}%`;
+  $counter.setAttribute("aria-valuenow", vnow.toString());
+  $counter.setAttribute("aria-valuemax", vmax.toString());
 };
 
 const notify = (() => {
